@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"sync/atomic"
+	"time"
 )
 
 // Request counter
@@ -16,6 +17,8 @@ type DebugTransport struct{}
 
 func (DebugTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	counter := atomic.AddInt32(&reqCounter, 1)
+
+	startTime := time.Now() // Record the start time
 
 	requestDump, err := httputil.DumpRequestOut(r, true)
 	if err != nil {
@@ -33,7 +36,9 @@ func (DebugTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	log.Printf("---RESPONSE %d---\n\n%s\n\n", counter, string(responseDump))
+	elapsedTime := time.Since(startTime).Milliseconds() // Calculate the elapsed time
+
+	log.Printf("---RESPONSE %d--- (Time: %d ms)\n\n%s\n\n", counter, elapsedTime, string(responseDump))
 	return response, err
 }
 
@@ -75,3 +80,4 @@ func main() {
 		panic(err)
 	}
 }
+
